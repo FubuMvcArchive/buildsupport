@@ -1,4 +1,4 @@
-namespace :nug do
+namespace :nuget do
 	@nuget = "lib/nuget.exe"
 	@nugroot = File.expand_path("/nugs")
 	@dependencies = []

@@ -1,56 +1,82 @@
 namespace :nuget do
 	@nuget = "lib/nuget.exe"
 	@nugroot = File.expand_path("/nugs")
-	@dependencies = []
 	
 	desc "Build the nuget package"
 	task :build do
-		FileList["packaging/nuget/*.nuspec"].each do |spec|
-		  sh "#{@nuget} pack #{spec} -o #{ARTIFACTS} -Version #{BUILD_NUMBER} -Symbols"
-		end
+    rm Dir.glob("#{ARTIFACTS}/*.nupkg")
+    FileList["packaging/nuget/*.nuspec"].each do |spec|
+      sh "#{@nuget} pack #{spec} -o #{ARTIFACTS} -Version #{BUILD_NUMBER} -Symbols"
+    end
 	end
 	
-	desc "pulls new NuGet updates from your local machine"
-	task :pull, [:location] => [:build] do |t, args|
-		args.with_defaults(:location => 'local')
-		location = args[:location]
-		
-		@dependencies.each do |f|
-			#nuget install
-		end
-	end
-		
-	desc "pushes new NuGet udates to your local machine"
-	task :push, [:location] => [:build] do |t, args|
-		args.with_defaults(:location => 'local')
-		location = args[:location]
-		
-		FileUtils.makedirs(@nugroot)
-		
-		Dir["#{ARTIFACTS}/*.nupkg"].each do |fn|
-			puts "Copying package #{fn} to #{@nugroot}"
-			FileUtils.cp fn, @nugroot
-		end
+	desc "update dependencies from local machine"
+    task :pull do
+    FileList[File.join(package_root, "*")].exclude{|f| File.file?(f)}.each do |package|
+      dst = File.join package, "lib"
+      src = File.join @nugroot, package_name(package), "lib"
+      if File.directory? src
+        clean_dir dst
+        cp_r src + "/.", dst, :verbose => false
+        puts "pulled from #{src}"
+      end
+    end
+  end
+	
+	desc "Updates dependencies from nuget.org"
+	task :update do
+    FileList["**/packages.config"].each do |proj|
+      sh "#{@nuget} update #{proj}"
+      sh "#{@nuget} install #{proj}"
+    end
 	end
 
-def unzip_file (file, destination)
-  require 'rubygems'
-  require 'zip/zip'
-  Zip::ZipFile.open(file) { |zip_file|
-   zip_file.each { |f|
-     f_path=File.join(destination, f.name)
-     FileUtils.mkdir_p(File.dirname(f_path))
-     zip_file.extract(f, f_path) unless File.exist?(f_path)
-   }
-  }
-end
+	desc "pushes dependencies to central location on local machine for nuget:pull from other repos"
+  task :push do
+    FileList["#{ARTIFACTS}/*.nupkg"].exclude(".symbols.nupkg").each do |file|
+      destination = File.join @nugroot, package_name(file)
+      clean_dir destination
+      unzip_file file, destination
+      puts "pushed to #{destination}"
+    end
+  end
+
+  def package_root
+    root = nil
+    ["src", "source"].each do |d|
+      packroot = File.join d, "packages"
+      root = packroot if File.directory? packroot
+    end
+    raise "No NuGet package root found" unless root
+    root
+  end
+
+  def package_name(filename)
+    File.basename(filename, ".nupkg").gsub(/[\d.]+$/, "")
+  end
+
+  def clean_dir(path)
+    mkdir_p path, :verbose => false
+    rm_r Dir.glob(File.join(path, "*.*")), :verbose => false
+  end
+		
+  def unzip_file (file, destination)
+    require 'rubygems'
+    require 'zip/zip'
+    Zip::ZipFile.open(file) { |zip_file|
+     zip_file.each { |f|
+       f_path=File.join(destination, f.name)
+       FileUtils.mkdir_p(File.dirname(f_path))
+       zip_file.extract(f, f_path) unless File.exist?(f_path)
+     }
+    }
+  end
 	
 	desc "Pushes nuget packages to the official feed"
 	task :release do
     require 'open-uri'
 
-    mkdir_p 'packaging/release'
-    rm_r Dir.glob("packaging/release/*.*")
+    clean_dir 'packaging/release'
 
     artifact_url = "http://teamcity.codebetter.com/guestAuth/repository/downloadAll/#{@teamcity_build_id}/.lastSuccessful/artifacts.zip"
     artifact = open(artifact_url)
@@ -60,5 +86,5 @@ end
         puts "May not have published #{nupkg}" unless ok
       end
     end
-	end
+	end	
 end

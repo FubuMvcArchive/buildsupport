@@ -1,17 +1,17 @@
 namespace :nuget do
-	@nuget = "lib/nuget.exe"
-	@nugroot = File.expand_path("/nugs")
-	
-	desc "Build the nuget package"
-	task :build do
+  @nuget = "lib/nuget.exe"
+  @nugroot = File.expand_path("/nugs")
+  
+  desc "Build the nuget package"
+  task :build do
     rm Dir.glob("#{ARTIFACTS}/*.nupkg")
     FileList["packaging/nuget/*.nuspec"].each do |spec|
       sh "#{@nuget} pack #{spec} -o #{ARTIFACTS} -Version #{BUILD_NUMBER} -Symbols"
     end
-	end
-	
-	desc "update dependencies from local machine"
-    task :pull, [:package] do |task, args|
+  end
+  
+  desc "update dependencies from local machine"
+  task :pull, [:package] do |task, args|
     FileList[File.join(package_root, "*")].exclude{|f| File.file?(f)}.each do |package|
       next if args[:package] && package_name(package).downcase != args[:package].downcase
       dst = File.join package, "lib"
@@ -20,19 +20,20 @@ namespace :nuget do
         clean_dir dst
         cp_r src + "/.", dst, :verbose => false
         puts "pulled from #{src}"
+        after_nuget_update(package_name(package), dst) if respond_to? :after_nuget_update
       end
     end
   end
-	
-	desc "Updates dependencies from nuget.org"
-	task :update do
+
+  desc "Updates dependencies from nuget.org"
+  task :update do
     FileList["**/packages.config"].each do |proj|
       sh "#{@nuget} update #{proj}"
       sh "#{@nuget} install #{proj}"
     end
-	end
+  end
 
-	desc "pushes dependencies to central location on local machine for nuget:pull from other repos"
+  desc "pushes dependencies to central location on local machine for nuget:pull from other repos"
   task :push, [:package] => :build do |task, args|
     FileList["#{ARTIFACTS}/*.nupkg"].exclude(".symbols.nupkg").each do |file|
       next if args[:package] && package_name(file).downcase != args[:package].downcase

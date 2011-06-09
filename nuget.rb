@@ -1,12 +1,12 @@
 namespace :nuget do
-  @nuget = "lib/nuget.exe"
-  @nugroot = File.expand_path("/nugs")
+  nuget = "#{File.dirname(__FILE__)}/nuget.exe"
+  nugroot = File.expand_path("/nugs")
   
   desc "Build the nuget package"
   task :build do
     rm Dir.glob("#{ARTIFACTS}/*.nupkg")
     FileList["packaging/nuget/*.nuspec"].each do |spec|
-      sh "#{@nuget} pack #{spec} -o #{ARTIFACTS} -Version #{BUILD_NUMBER} -Symbols"
+      sh "#{nuget} pack #{spec} -o #{ARTIFACTS} -Version #{BUILD_NUMBER} -Symbols"
     end
   end
   
@@ -15,7 +15,7 @@ namespace :nuget do
     FileList[File.join(package_root, "*")].exclude{|f| File.file?(f)}.each do |package|
       next if args[:package] && package_name(package).downcase != args[:package].downcase
       dst = File.join package, "lib"
-      src = File.join @nugroot, package_name(package), "lib"
+      src = File.join nugroot, package_name(package), "lib"
       if File.directory? src
         clean_dir dst
         cp_r src + "/.", dst, :verbose => false
@@ -28,8 +28,8 @@ namespace :nuget do
   desc "Updates dependencies from nuget.org"
   task :update do
     FileList["**/packages.config"].each do |proj|
-      sh "#{@nuget} update #{proj}"
-      sh "#{@nuget} install #{proj}"
+      sh "#{nuget} update #{proj}"
+      sh "#{nuget} install #{proj}"
     end
   end
 
@@ -37,7 +37,7 @@ namespace :nuget do
   task :push, [:package] => :build do |task, args|
     FileList["#{ARTIFACTS}/*.nupkg"].exclude(".symbols.nupkg").each do |file|
       next if args[:package] && package_name(file).downcase != args[:package].downcase
-      destination = File.join @nugroot, package_name(file)
+      destination = File.join nugroot, package_name(file)
       clean_dir destination
       unzip_file file, destination
       puts "pushed to #{destination}"
@@ -87,7 +87,7 @@ namespace :nuget do
     unzip_file artifact.path, "packaging/release"
     FileList['packaging/release/*.nupkg'].exclude(".symbols.nupkg").each do |nupkg|
       next if args[:package] && package_name(nupkg).downcase != args[:package].downcase
-      sh "#{@nuget} push #{nupkg}" do |ok, res|
+      sh "#{nuget} push #{nupkg}" do |ok, res|
         puts "May not have published #{nupkg}" unless ok
       end
     end

@@ -93,3 +93,7 @@ namespace :nuget do
     end
   end	
 end
+
+def package_tool(package, tool)
+  File.join(Dir.glob("src/packages/#{package}.*").sort.last, "tools", tool)
+end

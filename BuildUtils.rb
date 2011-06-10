@@ -9,7 +9,7 @@ class NUnitRunner
 		@compilePlatform = paths.fetch(:platform, '')
 		@compileTarget = paths.fetch(:compilemode, 'debug')
 	
-		@nunitExe = File.join(Dir.glob("src/packages/NUnit*").first, "tools", "nunit-console#{(@compilePlatform.empty? ? '' : "-#{@compilePlatform}")}.exe").gsub('/','\\') + ' /nothread'
+		@nunitExe = package_tool("NUnit", "nunit-console#{(@compilePlatform.empty? ? '' : "-#{@compilePlatform}")}.exe") + ' /nothread'
 	end
 	
 	def executeTests(assemblies)

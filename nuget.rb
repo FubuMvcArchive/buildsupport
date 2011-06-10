@@ -30,7 +30,7 @@ namespace :nuget do
   task :update do
     FileList["**/packages.config"].each do |proj|
       sh "#{nuget} update #{proj}"
-      sh "#{nuget} install #{proj}"
+      sh "#{nuget} install #{proj} -OutputDirectory src\\packages"
     end
   end
 

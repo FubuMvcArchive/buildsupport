@@ -1,5 +1,6 @@
 namespace :nuget do
-  nuget = "#{File.dirname(__FILE__)}/nuget.exe"
+  buildsupport_path = File.dirname(__FILE__)
+  nuget = "#{buildsupport_path}/nuget.exe"
   nugroot = File.expand_path("/nugs")
   
   desc "Build the nuget package"
@@ -78,14 +79,14 @@ namespace :nuget do
   desc "Pushes nuget packages to the official feed"
   task :release, [:package] do |t, args|
     require 'open-uri'
-
-    clean_dir 'packaging/release'
+    release_path = "#{buildsupport_path}/nuget_release"
+    clean_dir release_path
 
     artifact_url = "http://teamcity.codebetter.com/guestAuth/repository/downloadAll/#{@teamcity_build_id}/.lastSuccessful/artifacts.zip"
     puts "downloading artifacts from teamcity.codebetter.com"
     artifact = open(artifact_url)
-    unzip_file artifact.path, "packaging/release"
-    FileList['packaging/release/*.nupkg'].exclude(".symbols.nupkg").each do |nupkg|
+    unzip_file artifact.path, release_path
+    FileList["#{release_path}/*.nupkg"].exclude(".symbols.nupkg").each do |nupkg|
       next if args[:package] && package_name(nupkg).downcase != args[:package].downcase
       sh "#{nuget} push #{nupkg}" do |ok, res|
         puts "May not have published #{nupkg}" unless ok

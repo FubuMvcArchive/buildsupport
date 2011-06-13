@@ -13,21 +13,23 @@ namespace :nuget do
   
   desc "update dependencies from local machine"
   task :pull, [:package] do |task, args|
-    FileList[File.join(package_root, "*")].exclude{|f| File.file?(f)}.each do |package|
-      next if args[:package] && package_name(package).downcase != args[:package].downcase
+    Nuget.each_installed_package do |package|
+      next if args[:package] && Nuget.package_name(package).downcase != args[:package].downcase
       dst = File.join package, "lib"
-      src = File.join nugroot, package_name(package), "lib"
+      src = File.join nugroot, Nuget.package_name(package), "lib"
       if File.directory? src
         clean_dir dst
         cp_r src + "/.", dst, :verbose => false
         puts "pulled from #{src}"
-        after_nuget_update(package_name(package), dst) if respond_to? :after_nuget_update
+        after_nuget_update(Nuget.package_name(package), dst) if respond_to? :after_nuget_update
       end
     end
   end
 
   desc "Updates dependencies from nuget.org"
-  task :update do
+  task :update => [:update_packages, :clean]
+
+  task :update_packages do
     FileList["**/packages.config"].each do |proj|
       sh "#{nuget} update #{proj}"
       sh "#{nuget} install #{proj} -OutputDirectory src\\packages"
@@ -37,26 +39,12 @@ namespace :nuget do
   desc "pushes dependencies to central location on local machine for nuget:pull from other repos"
   task :push, [:package] => :build do |task, args|
     FileList["#{ARTIFACTS}/*.nupkg"].exclude(".symbols.nupkg").each do |file|
-      next if args[:package] && package_name(file).downcase != args[:package].downcase
-      destination = File.join nugroot, package_name(file)
+      next if args[:package] && Nuget.package_name(file).downcase != args[:package].downcase
+      destination = File.join nugroot, Nuget.package_name(file)
       clean_dir destination
       unzip_file file, destination
       puts "pushed to #{destination}"
     end
-  end
-
-  def package_root
-    root = nil
-    ["src", "source"].each do |d|
-      packroot = File.join d, "packages"
-      root = packroot if File.directory? packroot
-    end
-    raise "No NuGet package root found" unless root
-    root
-  end
-
-  def package_name(filename)
-    File.basename(filename, ".nupkg").gsub(/[\d.]+$/, "")
   end
 
   def clean_dir(path)
@@ -75,7 +63,7 @@ namespace :nuget do
      }
     }
   end
-	
+
   desc "Pushes nuget packages to the official feed"
   task :release, [:package] do |t, args|
     require 'open-uri'
@@ -87,14 +75,65 @@ namespace :nuget do
     artifact = open(artifact_url)
     unzip_file artifact.path, release_path
     FileList["#{release_path}/*.nupkg"].exclude(".symbols.nupkg").each do |nupkg|
-      next if args[:package] && package_name(nupkg).downcase != args[:package].downcase
+      next if args[:package] && Nuget.package_name(nupkg).downcase != args[:package].downcase
       sh "#{nuget} push #{nupkg}" do |ok, res|
         puts "May not have published #{nupkg}" unless ok
       end
     end
   end	
+
+  task :clean do
+    require 'rexml/document'
+    repo_paths = Nuget.repositories
+    packages = repo_paths.map{|repo| Nuget.packages(repo)}.reduce(:|)
+
+    Nuget.each_installed_package do |package|
+      name = Nuget.package_name(package)
+      tracked = packages.select{|p| p.include? name} 
+      if tracked.any? # only remove folders for older versions of tracked packages
+        should_delete = !tracked.detect{|t| package.end_with? t[name]}
+        rm_rf package if should_delete
+      end
+    end
+
+  end
 end
 
-def package_tool(package, tool)
-  File.join(Dir.glob("src/packages/#{package}.*").sort.last, "tools", tool)
+module Nuget
+  def self.each_installed_package
+    FileList[File.join(package_root, "*")].exclude{|f| File.file?(f)}.each do |package|
+      yield package
+    end
+  end
+
+  def self.repositories
+    repo_file_path = File.join package_root, "repositories.config"
+    file = REXML::Document.new File.read repo_file_path
+    file.get_elements("repositories/repository").map{|node| File.expand_path(File.join(package_root, node.attributes["path"]))}
+  end
+
+  def self.packages(package_config)
+    xml = REXML::Document.new File.read package_config
+    xml.get_elements('packages/package').map do |p|
+      { p.attributes['id'] => p.attributes['version'] } 
+    end
+  end
+
+  def self.package_root
+    root = nil
+    ["src", "source"].each do |d|
+      packroot = File.join d, "packages"
+      root = packroot if File.directory? packroot
+    end
+    raise "No NuGet package root found" unless root
+    root
+  end
+
+  def self.package_name(filename)
+    File.basename(filename, ".nupkg").gsub(/[\d.]+$/, "")
+  end
+
+  def self.tool(package, tool)
+    File.join(Dir.glob(File.join(package_root,"#{package}.*")).sort.last, "tools", tool)
+  end
 end

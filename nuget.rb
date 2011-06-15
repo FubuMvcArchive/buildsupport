@@ -34,7 +34,7 @@ namespace :nuget do
       sh "#{nuget} update #{proj}"
     end
     FileList["**/packages.config"].each do |proj|
-      sh "#{nuget} install #{proj} -OutputDirectory src\\packages"
+      sh "#{nuget} install #{proj} -OutputDirectory #{Nuget.package_root}"
     end
   end
 

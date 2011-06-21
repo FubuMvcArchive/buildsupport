@@ -1,7 +1,7 @@
 namespace :nuget do
   buildsupport_path = File.dirname(__FILE__)
   nuget = "#{buildsupport_path}/nuget.exe"
-  nugroot = File.expand_path("/nugs")
+  nugroot = File.expand_path(ENV['NUGET_HUB'] || "/nugs")
   
   desc "Build the nuget package"
   task :build do
@@ -22,6 +22,8 @@ namespace :nuget do
         cp_r src + "/.", dst, :verbose => false
         puts "pulled from #{src}"
         after_nuget_update(Nuget.package_name(package), dst) if respond_to? :after_nuget_update
+      else
+        puts "could not find #{src}"
       end
     end
   end

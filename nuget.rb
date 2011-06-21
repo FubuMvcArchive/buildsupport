@@ -3,6 +3,8 @@ namespace :nuget do
   nuget = "#{buildsupport_path}/nuget.exe"
   nugroot = File.expand_path(ENV['NUGET_HUB'] || "/nugs")
   
+  task :ripple => [:ci, :push]
+  
   desc "Build the nuget package"
   task :build do
     rm Dir.glob("#{ARTIFACTS}/*.nupkg")

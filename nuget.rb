@@ -17,15 +17,20 @@ namespace :nuget do
   task :pull, [:package] do |task, args|
     Nuget.each_installed_package do |package|
       next if args[:package] && Nuget.package_name(package).downcase != args[:package].downcase
-      dst = File.join package, "lib"
-      src = File.join nugroot, Nuget.package_name(package), "lib"
-      if File.directory? src
-        clean_dir dst
-        cp_r src + "/.", dst, :verbose => false
-        puts "pulled from #{src}"
-        after_nuget_update(Nuget.package_name(package), dst) if respond_to? :after_nuget_update
+      src_package = File.join nugroot, Nuget.package_name(package)
+      if File.directory? src_package
+        ['lib','tools'].each do |folder|
+          dst = File.join package, folder 
+          src = File.join src_package, folder 
+          if File.directory? src
+            clean_dir dst
+            cp_r src + "/.", dst, :verbose => false
+            after_nuget_update(Nuget.package_name(package), dst) if respond_to? :after_nuget_update
+          end
+        end
+        puts "pulled from #{src_package}"
       else
-        puts "could not find #{src}"
+        puts "could not find #{src_package}"
       end
     end
   end

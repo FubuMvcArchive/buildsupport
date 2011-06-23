@@ -110,8 +110,11 @@ namespace :nuget do
 end
 
 namespace :ripple do
+  @ripple_root = File.expand_path(File.join(File.dirname(__FILE__), "../../") + "/ripple")
+  @progress_file = "#{@ripple_root}/packages/ripple.txt"
+
   task :local => ["nuget:pull", :ci, "nuget:push"]
-  task :public => [:gitupdate, "nuget:update", :ci, :commit]
+  task :public => [:gitupdate, "nuget:update", :ci, :commit, :manualsteps]
 
   task :gitupdate do
     #raise "Uncommitted changes in #{Dir.pwd}" unless `git status --porcelain`.strip.empty?
@@ -122,18 +125,62 @@ namespace :ripple do
 
   task :commit do
     status = `git status --porcelain`
-    return if status.strip.empty?
     changes = status.split("\n").select{|l| l.start_with? "??"}.map{|l| l.match(/packages\/(.*)\//)[1]}
-    raise "Ambiguous change in #{Dir.pwd}. Resolve manually." unless changes.any?
-    msg = "Updated packages: #{changes.join(", ")}"
-    sh "git add -A"
-    sh "git commit -m \"#{msg}\""
-    pause
+    if changes.any?
+      msg = "Updated packages: #{changes.join(", ")}"
+      sh "git add -A"
+      sh "git commit -m \"#{msg}\""
+    else
+      puts "no changes to commit in #{Dir.pwd}"
+    end
   end
 
-  def pause
+  task :manualsteps do
+    puts """
+*******************************
+1) Push your changes to github. 
+2) Optionally kick off the teamcity build manually (if it hasn't started automatically yet)
+3) Wait for teamcity build to finish
+4) Run rake ripple:publish  to continue after publishing nuget packages publicly
+   or  rake ripple:continue to continue without publishing publicly
+"""
     sh "start http://teamcity.codebetter.com/viewType.html?buildTypeId=#{@teamcity_build_id}"
-    raise "Push your changes, then run rake ripple:continue when the teamcity.codebetter build is finished running"
+  end
+
+  task :continue do
+    job = get_next_job 
+    if job
+      puts "mark #{job} as complete"
+      mark_complete job
+
+      run_in @ripple_root, "rake ripple:nextjob"
+    else
+      puts "no current job to continue"
+    end
+  end
+
+  task :publish => ["nuget:release", :continue]
+
+  def mark_complete(job)
+    jobs = get_ripple_jobs
+    raise "Job does not exist: #{job} -- cannot mark it complete" unless jobs.include? job
+    init_ripple_jobs(jobs - [job])
+  end
+
+  def get_next_job
+    jobs = get_ripple_jobs
+    return nil unless jobs.any?
+    jobs[0]
+  end
+
+  def get_ripple_jobs
+    File.readlines(@progress_file).map{:chomp}.reject{:empty?}
+  end
+
+  def init_ripple_jobs(jobs)
+    File.open(@progress_file, "w") do |file|
+      jobs.each{|job| file.puts job}
+    end
   end
 end
 
@@ -175,4 +222,8 @@ module Nuget
   def self.tool(package, tool)
     File.join(Dir.glob(File.join(package_root,"#{package}.*")).sort.last, "tools", tool)
   end
+end
+
+def run_in(working_dir, cmd)
+  sh "buildsupport/run_in_path.cmd #{working_dir.gsub('/','\\')} #{cmd}"
 end

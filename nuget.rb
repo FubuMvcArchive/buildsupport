@@ -3,7 +3,6 @@ namespace :nuget do
   nuget = "#{buildsupport_path}/nuget.exe"
   nugroot = File.expand_path(ENV['NUGET_HUB'] || "/nugs")
   
-  task :ripple => [:ci, :push]
   
   desc "Build the nuget package"
   task :build do
@@ -109,6 +108,35 @@ namespace :nuget do
 
   end
 end
+
+namespace :ripple do
+  task :local => ["nuget:pull", :ci, "nuget:push"]
+  task :public => [:gitupdate, "nuget:update", :ci, :commit]
+
+  task :gitupdate do
+    #raise "Uncommitted changes in #{Dir.pwd}" unless `git status --porcelain`.strip.empty?
+    sh "git checkout master && git pull --ff-only" do |ok, status|
+      raise "Cannot pull latest into #{Dir.pwd}. You need to rebase or merge origin/master" unless ok
+    end
+  end
+
+  task :commit do
+    status = `git status --porcelain`
+    return if status.strip.empty?
+    changes = status.split("\n").select{|l| l.start_with? "??"}.map{|l| l.match(/packages\/(.*)\//)[1]}
+    raise "Ambiguous change in #{Dir.pwd}. Resolve manually." unless changes.any?
+    msg = "Updated packages: #{changes.join(", ")}"
+    sh "git add -A"
+    sh "git commit -m \"#{msg}\""
+    pause
+  end
+
+  def pause
+    sh "start http://teamcity.codebetter.com/viewType.html?buildTypeId=#{@teamcity_build_id}"
+    raise "Push your changes, then run rake ripple:continue when the teamcity.codebetter build is finished running"
+  end
+end
+
 
 module Nuget
   def self.each_installed_package

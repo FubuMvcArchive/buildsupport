@@ -9,15 +9,15 @@ class NUnitRunner
 		@compilePlatform = paths.fetch(:platform, '')
 		@compileTarget = paths.fetch(:compilemode, 'debug')
 	
-		@nunitExe = Nuget.tool("NUnit", "nunit-console#{(@compilePlatform.empty? ? '' : "-#{@compilePlatform}")}.exe") + ' /nothread'
-	end
+    @nunitExe = Nuget.tool("NUnit", "nunit-console#{(@compilePlatform.empty? ? '' : "-#{@compilePlatform}")}.exe") + Platform.switch("nothread")
+end
 	
 	def executeTests(assemblies)
 		Dir.mkdir @resultsDir unless exists?(@resultsDir)
 		
 		assemblies.each do |assem|
 			file = File.expand_path("#{@sourceDir}/#{assem}/bin/#{@compileTarget}/#{assem}.dll")
-			sh "#{@nunitExe} \"#{file}\""
+			sh Platform.runtime("#{@nunitExe} \"#{file}\"")
 		end
 	end
 end
@@ -30,9 +30,10 @@ class MSBuildRunner
 	    attributes[:projFile] = solutionFile
 	    attributes[:properties] ||= []
 	    attributes[:properties] << "Configuration=#{compileTarget}"
-	    attributes[:extraSwitches] = ["maxcpucount:2", "v:m", "t:rebuild"]
-		
-		self.runProjFile(attributes);
+	    attributes[:extraSwitches] = ["v:m", "t:rebuild"]
+		  attributes[:extraSwitches] << "maxcpucount:2" unless Platform.is_nix
+
+      self.runProjFile(attributes);
 	end
 	
 	def self.runProjFile(attributes)
@@ -40,10 +41,14 @@ class MSBuildRunner
 		compileTarget = attributes.fetch(:compilemode, 'debug')
 	    projFile = attributes[:projFile]
 		
-		frameworkDir = File.join(ENV['windir'].dup, 'Microsoft.NET', 'Framework', version)
-		msbuildFile = File.join(frameworkDir, 'msbuild.exe')
-		
-		properties = attributes.fetch(:properties, [])
+    if Platform.is_nix
+      msbuildFile = `which xbuild`.chop
+    else
+		  frameworkDir = File.join(ENV['windir'].dup, 'Microsoft.NET', 'Framework', version)
+		  msbuildFile = File.join(frameworkDir, 'msbuild.exe')
+   end
+
+    properties = attributes.fetch(:properties, [])
 		
 		switchesValue = ""
 		
@@ -69,7 +74,10 @@ end
 
 class AspNetCompilerRunner
 	def self.compile(attributes)
-		
+		if Platform.is_nix
+      puts "Skipping AspNet compilation. Not supported by Mono."
+      return
+    end
 		webPhysDir = attributes.fetch(:webPhysDir, '')
 		webVirDir = attributes.fetch(:webVirDir, 'This_Value_Is_Not_Used')
 		

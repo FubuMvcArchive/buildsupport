@@ -81,7 +81,7 @@ namespace :nuget do
     clean_dir release_path
 
     artifact_url = "http://teamcity.codebetter.com/guestAuth/repository/downloadAll/#{@teamcity_build_id}/.lastSuccessful/artifacts.zip"
-    puts "downloading artifacts from teamcity.codebetter.com"
+    puts "downloading artifacts from #{artifact_url}"
     artifact = open(artifact_url)
     unzip_file artifact.path, release_path
     FileList["#{release_path}/*.nupkg"].exclude(".symbols.nupkg").each do |nupkg|
@@ -174,7 +174,7 @@ namespace :ripple do
   end
 
   def get_ripple_jobs
-    File.readlines(@progress_file).map{:chomp}.reject{:empty?}
+    File.readlines(@progress_file).map{|x| x.chomp}.reject{|x| x.empty?}
   end
 
   def init_ripple_jobs(jobs)

@@ -8,7 +8,7 @@ module Platform
     command = cmd
     if self.is_nix
       runtime = (CLR_TOOLS_VERSION || "v4.0.30319")
-      command = "mono --runtime=#{runtime} " + cmd if is_nix
+      command = "mono --runtime=#{runtime} #{cmd}"
     end
     command
   end

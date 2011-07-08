@@ -35,7 +35,7 @@ namespace :nuget do
   end
 
   desc "Updates dependencies from nuget.org"
-  task :update => [:update_packages, :clean]
+  task :update => [:update_packages, :clean, :update_callback]
 
   task :update_packages do
     FileList["**/*.sln"].each do |proj|
@@ -44,6 +44,10 @@ namespace :nuget do
     FileList["**/packages.config"].each do |proj|
       sh "#{nuget} install #{proj} -OutputDirectory #{Nuget.package_root}"
     end
+  end
+  
+  task :update_callback do
+    after_nuget_update(nil, Nuget.package_root) if respond_to? :after_nuget_update
   end
 
   desc "pushes dependencies to central location on local machine for nuget:pull from other repos"

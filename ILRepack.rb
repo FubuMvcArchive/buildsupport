@@ -20,14 +20,19 @@ class ILRepack
     params << "/ndebug" unless debugsymbols
     params << "/union" if union
 
-    mergeExe = "#{File.dirname(__FILE__)}/ILMerge.exe"
-    @cmd = "#{mergeExe} #{params.join(' ')}"
+    merge_exe = "#{File.dirname(__FILE__)}/ILMerge.exe"
+    @cmd = "#{merge_exe} #{params.join(' ')}"
   end
 
   def merge(params)
+
+    if Platform.is_nix
+      puts "Merging is *currently* not supported on Mono. Skipping merge..."
+      return
+    end
+
     src = params.fetch(:lib, '')
     refs = params.fetch(:refs, []).map {|f| File.join(src, f)}
-
     sh Platform.runtime("#{@cmd} #{refs.join(' ')}")
   end
 end

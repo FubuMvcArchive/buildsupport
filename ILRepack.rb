@@ -5,24 +5,23 @@ class ILRepack
 
     out = attributes.fetch(:out, '')
     lib = attributes.fetch(:lib, nil)
-    target = attributes.fetch(:target, nil)
+    target = attributes.fetch(:target, 'library')
     targetplatform = attributes.fetch(:targetplatform, "v4")
     internalize = attributes.fetch(:internalize, true)
     debugsymbols = attributes.fetch(:debugsymbols, false)
     union = attributes.fetch(:union, false)
 
     params = []
-    params << "-out:#{out}"
-    params << "-lib:#{lib}" unless lib.nil?
-    params << "-target:#{target}" unless target.nil?
-    params << "-targetplatform:#{targetplatform}" unless targetplatform.nil?
-    params << "-internalize" if internalize
-    params << "-ndebug" if debugsymbols
-    params << "-union" if union
+    params << "/out:#{out}"
+    params << "/lib:#{lib}" unless lib.nil?
+    params << "/target:#{target}" unless target.nil?
+    params << "/targetplatform:#{targetplatform}" unless targetplatform.nil?
+    params << "/internalize" if internalize
+    params << "/ndebug" unless debugsymbols
+    params << "/union" if union
 
-    repackExe = "#{File.dirname(__FILE__)}/ILRepack.exe"
-
-    @cmd = "#{repackExe} #{params.join(' ')}"
+    mergeExe = "#{File.dirname(__FILE__)}/ILMerge.exe"
+    @cmd = "#{mergeExe} #{params.join(' ')}"
   end
 
   def merge(params)

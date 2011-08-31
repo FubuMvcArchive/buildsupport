@@ -1,5 +1,4 @@
 load "#{File.dirname(__FILE__)}/platform.rb"
-
 class ILRepack
 
   def initialize(attributes)
@@ -28,9 +27,8 @@ class ILRepack
 
   def merge(params)
     src = params.fetch(:lib, '')
-    refs = params.fetch(:refs, []).map {|f| File.join(src, f + " ")}
+    refs = params.fetch(:refs, []).map {|f| File.join(src, f)}
 
-    sh Platform.runtime("#{@cmd} #{refs}")
+    sh Platform.runtime("#{@cmd} #{refs.join(' ')}")
   end
-
 end

@@ -28,3 +28,9 @@
 	task :history do
 	  sh 'ripple history'
 	end
+	
+	desc "publishes all the nuget's published by this solution"
+	task :publish do
+	  nuget_api_key = ENV[apikey]
+	  sh 'ripple publish #{BUILD_NUMBER} #{nuget_api_key}'
+	end

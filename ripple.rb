@@ -11,3 +11,9 @@
 	  sh 'buildsupport/ripple.exe update'
 	end
 
+	desc "For CI mode, replaces all dependencies with the latest, greatest version of all"
+	task :update_all_depencencies do
+	  sh 'ripple clean'
+	  sh 'ripple update'
+	  sh 'ripple restore'
+	end

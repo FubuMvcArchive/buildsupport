@@ -17,3 +17,9 @@
 	  sh 'ripple update'
 	  sh 'ripple restore'
 	end
+	
+	desc "restore packages if the files don't seem to exist"
+	task :restore_if_missing do
+	  packageFiles = Dir["#{File.dirname(__FILE__)}/src/packages/*.dll"]
+	  sh 'ripple restore' unless packageFiles.any?
+	end

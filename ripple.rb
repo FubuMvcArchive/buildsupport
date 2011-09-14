@@ -23,3 +23,8 @@
 	  packageFiles = Dir["#{File.dirname(__FILE__)}/src/packages/*.dll"]
 	  sh 'ripple restore' unless packageFiles.any?
 	end
+	
+	desc "creates a history file for nuget dependencies"
+	task :history do
+	  sh 'ripple history'
+	end

@@ -12,7 +12,7 @@
 	end
 
 	desc "For CI mode, replaces all dependencies with the latest, greatest version of all"
-	task :update_all_depencencies do
+	task :update_all_dependencies do
 	  sh 'ripple.cmd clean'
 	  sh 'ripple.cmd update'
 	  sh 'ripple.cmd restore'

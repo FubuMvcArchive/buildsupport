@@ -17,7 +17,7 @@ class NUnitRunner
 		
 		assemblies.each do |assem|
 			file = File.expand_path("#{@sourceDir}/#{assem}/bin/#{@compileTarget}/#{assem}.dll")
-			sh Platform.runtime("#{@nunitExe} \"#{file}\" /xml=#{@resultsDir}/#{assem}-TestResults.xml")
+			sh Platform.runtime("#{@nunitExe} -xml=#{@resultsDir}/#{assem}-TestResults.xml \"#{file}\"")
 		end
 	end
 end

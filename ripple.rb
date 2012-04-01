@@ -37,6 +37,12 @@
 	  cmd = cmd + " -s #{server}" unless server.nil?
 	  ripple cmd
 	end
+	
+	desc "packages the nuget files from the nuspec files in packaging/nuget and publishes to /artifacts"
+	task :package => [:history] do
+		cmd = "local-nuget -version #{BUILD_NUMBER} -destination artifacts"
+		ripple cmd
+	end
 
 	def self.update()
 	  cmd = "update"

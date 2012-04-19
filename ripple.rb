@@ -58,7 +58,7 @@
 	  feeds = ENV['feeds']
 	  feeds = 'http://build.fubu-project.org/guestAuth/app/nuget/v1/FeedService.svc#http://packages.nuget.org/v1/FeedService.svc/' if feeds.nil?
 	  
-	  cmd = cmd + " -feeds #{feeds}" unless feeds.nil?
+	  cmd = cmd + " --feeds #{feeds}" unless feeds.nil?
 	  cmd
 	end
 	

@@ -196,17 +196,15 @@ module Nuget
     end
   end
 
-  def self.repositories
-    repo_file_path = File.join package_root, "repositories.config"
-    file = REXML::Document.new File.read repo_file_path
-    file.get_elements("repositories/repository").map{|node| File.expand_path(File.join(package_root, node.attributes["path"]))}
-  end
-
   def self.packages(package_config)
     xml = REXML::Document.new File.read package_config
     xml.get_elements('packages/package').map do |p|
       { p.attributes['id'] => p.attributes['version'] } 
     end
+  end
+
+  def self.repositories
+    Dir.glob("{source,src}/**/packages.config")
   end
 
   def self.package_root

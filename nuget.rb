@@ -204,16 +204,31 @@ module Nuget
   end
 
   def self.repositories
+
+    #get packages.config from nuget's repositories.config file in the package root
+    repo_file_path = File.join package_root, "repositories.config"
+    if FileTest.exists? repo_file_path 
+      file = REXML::Document.new File.read repo_file_path
+      return file.get_elements("repositories/repository").map{|node| File.expand_path(File.join(package_root, node.attributes["path"]))}
+    end 
+    
+    #otherwise glob all the packages.config in the source directory
     Dir.glob("{source,src}/**/packages.config")
   end
 
   def self.package_root
     root = nil
-    ["src", "source"].each do |d|
+    
+    packroots = Dir.glob("{source,src}/packages")
+
+    return packroots.last if packroots.length > 0
+
+    Dir.glob("{source,src}").each do |d|
       packroot = File.join d, "packages"
-      root = packroot if File.directory? packroot
-    end
-    raise "No NuGet package root found" unless root
+      FileUtils.mkdir_p(packroot) 
+      root = packroot
+    end       
+
     root
   end
 

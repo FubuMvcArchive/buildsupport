@@ -43,6 +43,7 @@ class MSBuildRunner
 		
     if Platform.is_nix
       msbuildFile = `which xbuild`.chop
+      attributes[:properties] << "TargetFrameworkProfile="""""
     else
 		  frameworkDir = File.join(ENV['windir'].dup, 'Microsoft.NET', 'Framework', version)
 		  msbuildFile = File.join(frameworkDir, 'msbuild.exe')

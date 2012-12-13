@@ -237,7 +237,7 @@ module Nuget
   end
 
   def self.tool(package, tool)
-    File.join(Dir.glob(File.join(package_root,"#{package}.*")).sort.last, "tools", tool)
+    File.join(Dir.glob(File.join(package_root,"#{package}.[0-9]*")).sort.last, "tools", tool)
   end
 end
 

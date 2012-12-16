@@ -15,7 +15,7 @@ namespace :docs do
 	end
 	
 	desc "Rebuilds the topic tree for the Docs project from the Topics.Xml file, filling in any missing pieces"
-	task :snippets do
+	task :topics do
 		sh "buildsupport/FubuDocs/FubuDocsRunner.exe build-topics"
 	end
 end

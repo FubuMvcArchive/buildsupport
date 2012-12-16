@@ -1,3 +1,4 @@
 nuget_release
 *.DS_Store
 logs
+FubuDocs/fubu-content

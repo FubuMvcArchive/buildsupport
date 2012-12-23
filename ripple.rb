@@ -56,7 +56,7 @@
 
 	def self.try_add_feeds(cmd)
 	  feeds = ENV['feeds']
-	  feeds = 'http://build.fubu-project.org/guestAuth/app/nuget/v1/FeedService.svc/#http://packages.nuget.org/v1/FeedService.svc/#http://nuget.org/api/v2#http://myget.org/F/katana' if feeds.nil?
+	  feeds = 'http://myget.org/F/katana/#http://build.fubu-project.org/guestAuth/app/nuget/v1/FeedService.svc/#http://packages.nuget.org/v1/FeedService.svc/#http://nuget.org/api/v2' if feeds.nil?
 	  
 	  cmd = cmd + " --feeds #{feeds}" unless feeds.nil?
 	  cmd

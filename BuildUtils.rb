@@ -1,4 +1,5 @@
 require 'erb'
+include FileUtils
 
 class NUnitRunner
 	include FileTest

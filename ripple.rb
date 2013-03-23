@@ -51,7 +51,7 @@
 	
 	def self.restore()
 	  cmd = "restore"
-	  ripple try_add_feeds cmd	
+	  ripple("restore")
 	end
 
 	def self.try_add_feeds(cmd)

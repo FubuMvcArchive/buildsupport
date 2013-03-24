@@ -19,7 +19,7 @@
 	desc "For CI mode, replaces all dependencies with the latest, greatest version of all"
 	task :update_all_dependencies do
 	  ripple 'clean'
-	  update
+	  #update We don't need it anymore with ripple2
 	  restore
 	end
 	

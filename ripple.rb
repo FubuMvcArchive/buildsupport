@@ -4,6 +4,11 @@
 	  puts 'Restoring all the nuget package files'
 	  restore
 	end
+    
+    desc "Describes the current ripple configuration"
+    task :describe do
+        ripple("describe")
+    end
 	
 	desc "Updates nuget package files to the latest"
 	task :update do

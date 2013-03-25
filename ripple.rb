@@ -24,9 +24,8 @@
 	end
 	
 	desc "restore packages if the files don't seem to exist"
-	task :restore_if_missing do
-	  packageFiles = Dir["#{File.dirname(__FILE__)}/src/packages/*.dll"]
-	  restore unless packageFiles.any?
+	task :restore_if_missing => [:restore] do
+        # just redirects
 	end
 	
 	desc "creates a history file for nuget dependencies"
@@ -56,13 +55,11 @@
 	
 	def self.restore()
 	  cmd = "restore"
-	  ripple("restore")
+	  ripple try_add_feeds cmd
 	end
 
 	def self.try_add_feeds(cmd)
 	  feeds = ENV['feeds']
-	  feeds = 'http://myget.org/F/katana/#http://build.fubu-project.org/guestAuth/app/nuget/v1/FeedService.svc/#http://packages.nuget.org/v1/FeedService.svc/#http://nuget.org/api/v2' if feeds.nil?
-	  
 	  cmd = cmd + " --feeds #{feeds}" unless feeds.nil?
 	  cmd
 	end

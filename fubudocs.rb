@@ -13,14 +13,9 @@ namespace :docs do
 	task :snippets do
 		fubudocs "snippets"
 	end
-	
-	desc "Rebuilds the topic tree for the Docs project from the Topics.Xml file, filling in any missing pieces"
-	task :topics do
-		fubudocs "build-topics"
-	end
 end
 
 def self.fubudocs(args)
-  fubudocs = Platform.runtime(Nuget.tool("FubuDocs", "FubuDocsRunner.exe"))
+  fubudocs = 'buildsupport/FubuDocsRunner.exe'
   sh "#{fubudocs} #{args}"
 end

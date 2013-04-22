@@ -65,6 +65,6 @@
 	end
 	
 	def self.ripple(args)
-	  ripple = Platform.runtime("buildsupport/ripple.exe") 
+	  ripple = File.dirname(File.expand_path(__FILE__)) + '/ripple.exe'
 	  sh "#{ripple} #{args}"
 	end

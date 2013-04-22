@@ -26,6 +26,7 @@ namespace :docs do
 end
 
 def self.fubudocs(args)
-  fubudocs = 'buildsupport/FubuDocsRunner.exe'
+  fubudocs = File.dirname(File.expand_path(__FILE__)) + '/FubuDocsRunner.exe'
+  
   sh "#{fubudocs} #{args}"
 end
